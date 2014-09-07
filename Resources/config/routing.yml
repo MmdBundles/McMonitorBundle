@@ -1,0 +1,6 @@
+mmd_mc_monitor_v1_add_server:
+    path:     /api/v1/{secret}/add/{ip}
+    defaults: { _controller: MmdMcMonitorBundle:ApiV1:add }
+mmd_mc_monitor_v1_remove_server:
+    path:     /api/v1/{secret}/remove/{ip}
+    defaults: { _controller: MmdMcMonitorBundle:ApiV1:remove }
