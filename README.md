@@ -11,7 +11,9 @@ This will prevent your site being blocked when making requests to servers.
 ```json
 "require": {
     ...
-    "mmd/mc-monitor": "dev-master"
+    "mmd/mc-monitor": "dev-master",
+    "sensio/buzz-bundle": "dev-master",
+    "neitanod/forceutf8": "dev-master"
 }
 ```
 
