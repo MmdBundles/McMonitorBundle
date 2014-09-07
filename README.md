@@ -57,7 +57,7 @@ cd /path/to/project/root/
 sudo -u www-data php app/console mmd:mc-monitor:check-next-server
 ```
 
-Run commands as apache2 user `www-data` to prevent `Unable to write in the cache directory` error
+Run command as apache user `www-data` to prevent `Unable to write in the cache directory` error
 
 ## Usage
 
@@ -94,8 +94,8 @@ There is no way to remove a server from monitoring directly.
 This is done for cases when someone knows your secret,
 he will not be able to remove all servers from monitoring.
 
-A server can be removed from monitoring by sending a json response to the API
-when it will make a request to specified webhook url in the following format:
+A server can be removed from monitoring by sending a json response to the API,
+when it will make a request to specified webhook url, in the following format:
 
 ```json
 {"remove":true}
