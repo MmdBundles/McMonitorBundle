@@ -1,6 +1,6 @@
 # Minecraft Servers Monitor
 
-Create your own service that makes regular requests to minecraft servers and sends the information to your site.
+Create your own service that makes regular requests to minecraft servers and sends the information to a webhook (your site).
 
 This will prevent your site being blocked when making requests to servers.
 
