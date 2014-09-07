@@ -86,7 +86,9 @@ https://site.com/secret-url-for-mc-monitor/?data={
     secret: "<secret-set-in-parameters>",
     ip: "<server-ip>",
     status: true, /* true=online, false=offline */
-    data: {...} /* http://wiki.vg/Query#Full_stat */
+    data: {
+        info: {...} /* http://wiki.vg/Query#Full_stat */
+    }
 }
 ```
 
