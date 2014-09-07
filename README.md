@@ -6,6 +6,15 @@ This will prevent your site being blocked when making requests to servers.
 
 ## Install
 
+* Add to `composer.json`
+
+```json
+"require": {
+    ...
+    "mmd/mc-monitor": "dev-master"
+}
+```
+
 * Include bundle in `app/AppKernel.php`
 
 ```php
