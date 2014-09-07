@@ -32,7 +32,7 @@ mmd_mc_monitor:
     prefix:   /mc-monitor
 ```
 
-* Set your own private secret/password. Add to `app/config/parameters.yml`
+* Add parameters to `app/config/parameters.yml`
 
 ```yml
 # The secret used in API requests
