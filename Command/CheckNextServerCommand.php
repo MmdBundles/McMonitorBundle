@@ -105,7 +105,7 @@ class CheckNextServerCommand extends ContainerAwareCommand
             /**
              * @var \Buzz\Message\Response $response
              */
-            $response = $buzz->get($webhook .'?data='. urlencode(json_encode($r['data'])));
+            $response = $buzz->get($webhook .'?data='. urlencode(json_encode($r)));
 
             $statusCode = $response->getStatusCode();
 
