@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping\Index;
 /**
  * Monitored Server
  *
- * @ORM\Table(name="mmc_mc_monitor_server", indexes={@index(name="checked", columns={"checked"})})
+ * @ORM\Table(name="mmd_mc_monitor_server", indexes={@index(name="checked", columns={"checked"})})
  * @ORM\Entity(repositoryClass="Mmd\Bundle\McMonitorBundle\Entity\ServerRepository")
  * @ORM\HasLifecycleCallbacks()
  */
