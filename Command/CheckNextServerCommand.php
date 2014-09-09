@@ -10,35 +10,49 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Mmd\Bundle\McMonitorBundle\Service\MinecraftQuery\MinecraftQueryException;
 use ForceUTF8\Encoding as ForceUTF8Encoding;
 use Buzz\Exception\ClientException as BuzzClientException;
+use Mmd\Bundle\McMonitorBundle\Entity\Server;
 
 class CheckNextServerCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
         $this
-            ->setName('mmd:mc-monitor:check-next-server')
-            ->setDescription('Check next minecraft server')
+            ->setName('mmd:mc-monitor:check')
+            ->setDescription('Check servers and send info to the webhook')
+            ->addArgument(
+                'amount',
+                InputArgument::OPTIONAL,
+                'How many servers to check at once'
+            )
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if ($amount = $input->getArgument('amount')) {
+            $amount = intval($amount);
+        } else {
+            $amount = 1;
+        }
+
+        $now = new \DateTime();
         $em = $this->getContainer()->get('doctrine')->getManager();
         $repository = $this->getContainer()->get('doctrine')->getRepository('MmdMcMonitorBundle:Server');
 
-        /**
-         * @var \Mmd\Bundle\McMonitorBundle\Entity\Server $server
-         */
-        $server = $repository->findNextForCheck();
+        foreach ($repository->findNextForCheck($amount) as $server) {
+            /**
+             * @var \Mmd\Bundle\McMonitorBundle\Entity\Server $server
+             */
 
-        if (!$server) {
-            $output->writeln('No server found');
-            return;
+            $server->setChecked($now);
+            $em->flush();
+
+            $this->checkServer($server, $input, $output);
         }
+    }
 
-        $server->setChecked(new \DateTime());
-        $em->flush();
-
+    protected function checkServer(Server $server, InputInterface $input, OutputInterface $output)
+    {
         /**
          * Separate ip and port
          */
@@ -126,6 +140,8 @@ class CheckNextServerCommand extends ContainerAwareCommand
                 if (isset($json_response['remove']) && $json_response['remove']) {
                     // remove server
                     $output->writeln('Server removed');
+
+                    $em = $this->getContainer()->get('doctrine')->getManager();
                     $em->remove($server);
                     $em->flush();
                 }

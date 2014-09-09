@@ -52,14 +52,19 @@ php app/console doctrine:schema:update --force
 
 ## Configure
 
-* Set crontab to execute command that checks servers status and calls the webhook
+* Set crontab to execute command that checks servers status and send information to the webhook
 
 ```sh
 cd /path/to/project/root/
-sudo -u www-data php app/console mmd:mc-monitor:check-next-server
+sudo -u www-data php app/console mmd:mc-monitor:check 3
 ```
 
-Run command as apache user `www-data` to prevent `Unable to write in the cache directory` error
+You can specify how many servers to check at once.
+
+The servers will be ordered ascending by last checked time.
+
+Run command as apache user `www-data` to prevent `Unable to write in the cache directory` error.
+In this case the cron must be set as root user for the `sudo` command to work in background.
 
 ## Usage
 
