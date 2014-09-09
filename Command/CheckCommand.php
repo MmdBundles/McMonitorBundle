@@ -35,19 +35,76 @@ class CheckCommand extends ContainerAwareCommand
             $amount = 1;
         }
 
+        $webhookData = array(
+            'secret'  => $this->getContainer()->getParameter('mmd.mc_monitor.secret'),
+            'servers' => array(),
+        );
+
         $now = new \DateTime();
         $em = $this->getContainer()->get('doctrine')->getManager();
         $repository = $this->getContainer()->get('doctrine')->getRepository('MmdMcMonitorBundle:Server');
+        $servers = $repository->findNextForCheck($amount);
 
-        foreach ($repository->findNextForCheck($amount) as $server) {
-            /**
-             * @var \Mmd\Bundle\McMonitorBundle\Entity\Server $server
-             */
+        foreach ($servers as $server) {
+            /* @var \Mmd\Bundle\McMonitorBundle\Entity\Server $server */
 
             $server->setChecked($now);
             $em->flush();
 
-            $this->checkServer($server, $input, $output);
+            $webhookData['servers'][$server->getIp()] = $this->checkServer($server, $input, $output);
+        }
+
+        /**
+         * @var \Buzz\Browser $buzz
+         */
+        $buzz = $this->getContainer()->get('buzz');
+
+        $webhookUrl = $this->getContainer()->getParameter('mmd.mc_monitor.webhook');
+
+        try {
+            $output->writeln('');
+            $output->writeln('Calling webhook: '. $webhookUrl .'?data=...');
+
+            /**
+             * @var \Buzz\Message\Response $response
+             */
+            $response = $buzz->get($webhookUrl .'?data='. urlencode(json_encode($webhookData)));
+
+            $statusCode = $response->getStatusCode();
+
+            do {
+                if ($statusCode == 200) {
+                    $output->writeln('<info>Webhook Succeeded</info>');
+                } else {
+                    $output->writeln('<error>Webhook returned the '. $statusCode .' status code</error>');
+                    break;
+                }
+
+                $json_response = json_decode($response->getContent(), true);
+
+                if ($json_response === null || !is_array($json_response)) {
+                    break;
+                }
+
+                if (isset($json_response['remove']) && is_array($json_response['remove'])) {
+                    // removing specified servers
+
+                    $output->writeln('');
+
+                    foreach ($servers as $server) {
+                        /* @var \Mmd\Bundle\McMonitorBundle\Entity\Server $server */
+
+                        if (in_array($server->getIp(), $json_response['remove'])) {
+                            $output->writeln('Removing '. $server->getIp());
+                            $em->remove($server);
+                        }
+                    }
+
+                    $em->flush();
+                }
+            } while(false);
+        } catch(BuzzClientException $e) {
+            $output->writeln('<error>'. '[Webhook Exception]'. PHP_EOL . $e->getMessage() .'</error>');
         }
     }
 
@@ -70,11 +127,9 @@ class CheckCommand extends ContainerAwareCommand
             }
         }
 
-        $r = array(
-            'secret' => $this->getContainer()->getParameter('mmd.mc_monitor.secret'),
-            'ip'     => $server->getIp(),
+        $webhookData = array(
             'status' => false,
-            'data'   => array()
+            'data'   => array(), // todo: handcoded data fields, to be clear what it returns
         );
 
         /**
@@ -83,71 +138,30 @@ class CheckCommand extends ContainerAwareCommand
         $minecraftQuery = $this->getContainer()->get('mmd.mc_monitor.minecraft_query');
 
         try {
+            $output->writeln('');
             $output->writeln('Checking '. $server->getIp());
 
             $minecraftQuery->Connect($serverIp, $serverPort);
 
-            $r['status'] = true;
-            $r['data']['info'] = $minecraftQuery->GetInfo();
+            $webhookData['status'] = true;
+            $webhookData['data']['info'] = $minecraftQuery->GetInfo();
 
-            $r['data']['info']['hostname'] = ForceUTF8Encoding::toUTF8($r['data']['info']['hostname']);
-            $r['data']['info']['_parsed']['hostname'] = str_replace(array(
+            $webhookData['data']['info']['hostname'] = ForceUTF8Encoding::toUTF8($webhookData['data']['info']['hostname']);
+            $webhookData['data']['info']['_parsed']['hostname'] = str_replace(array(
                 '§0', '§1', '§2', '§3', '§4', '§5', '§6', '§7', '§8', '§9', '§a', '§b', '§c', '§d', '§e', '§f',
                 '§k', '§l', '§m', '§n', '§o', '§r'
-            ), array(''), $r['data']['info']['hostname']);
+            ), array(''), $webhookData['data']['info']['hostname']);
 
             $output->writeln(
                 sprintf('<info>Online %d/%d players</info>',
-                    $r['data']['info']['numplayers'],
-                    $r['data']['info']['maxplayers']
+                    $webhookData['data']['info']['numplayers'],
+                    $webhookData['data']['info']['maxplayers']
                 )
             );
         } catch(MinecraftQueryException $e) {
             $output->writeln('<error>'. '[Minecraft Query Exception]'. PHP_EOL . $e->getMessage() .'</error>');
         }
 
-        /**
-         * @var \Buzz\Browser $buzz
-         */
-        $buzz = $this->getContainer()->get('buzz');
-
-        $webhook = $this->getContainer()->getParameter('mmd.mc_monitor.webhook');
-
-        try {
-            $output->writeln('Calling webhook: '. $webhook .'?data=...');
-
-            /**
-             * @var \Buzz\Message\Response $response
-             */
-            $response = $buzz->get($webhook .'?data='. urlencode(json_encode($r)));
-
-            $statusCode = $response->getStatusCode();
-
-            do {
-                if ($statusCode == 200) {
-                    $output->writeln('<info>Webhook Succeeded</info>');
-                } else {
-                    $output->writeln('<error>Webhook returned the '. $statusCode .' status code</error>');
-                    break;
-                }
-
-                $json_response = json_decode($response->getContent(), true);
-
-                if ($json_response === null || !is_array($json_response)) {
-                    break;
-                }
-
-                if (isset($json_response['remove']) && $json_response['remove']) {
-                    // remove server
-                    $output->writeln('Server removed');
-
-                    $em = $this->getContainer()->get('doctrine')->getManager();
-                    $em->remove($server);
-                    $em->flush();
-                }
-            } while(false);
-        } catch(BuzzClientException $e) {
-            $output->writeln('<error>'. '[Webhook Exception]'. PHP_EOL . $e->getMessage() .'</error>');
-        }
+        return $webhookData;
     }
 }

@@ -89,10 +89,15 @@ The monitoring will do requests in the following format
 ```text
 https://site.com/secret-url-for-mc-monitor/?data={
     secret: "<secret-set-in-parameters>",
-    ip: "<server-ip>",
-    status: true, /* true=online, false=offline */
-    data: {
-        info: {...} /* http://wiki.vg/Query#Full_stat */
+    servers: {
+        "<server-ip>": {
+            status: true, /* true=online, false=offline */
+            data: {
+                info: {...} /* http://wiki.vg/Query#Full_stat */
+            }
+        },
+        "<server-ip>": {...},
+        ...
     }
 }
 ```
@@ -107,5 +112,5 @@ A server can be removed from monitoring by sending a json response to the API,
 when it will make a request to specified webhook url, in the following format:
 
 ```json
-{"remove":true}
+{"remove":["127.0.0.1:25565","192.168.1.100","<server-ip>"]}
 ```
