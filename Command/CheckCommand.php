@@ -12,7 +12,7 @@ use ForceUTF8\Encoding as ForceUTF8Encoding;
 use Buzz\Exception\ClientException as BuzzClientException;
 use Mmd\Bundle\McMonitorBundle\Entity\Server;
 
-class CheckNextServerCommand extends ContainerAwareCommand
+class CheckCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
