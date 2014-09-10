@@ -7,10 +7,11 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Mmd\Bundle\McMonitorBundle\Service\MinecraftQuery\MinecraftQueryException;
 use ForceUTF8\Encoding as ForceUTF8Encoding;
 use Buzz\Exception\ClientException as BuzzClientException;
 use Mmd\Bundle\McMonitorBundle\Entity\Server;
+use Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPing\MinecraftServerPing;
+use Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPing\MinecraftServerPingException;
 
 class CheckCommand extends ContainerAwareCommand
 {
@@ -129,39 +130,53 @@ class CheckCommand extends ContainerAwareCommand
 
         $webhookData = array(
             'status' => false,
-            'data'   => array(), // todo: handcoded data fields, to be clear what it returns
+            'data'   => array(),
         );
-
-        /**
-         * @var \Mmd\Bundle\McMonitorBundle\Service\MinecraftQuery $minecraftQuery
-         */
-        $minecraftQuery = $this->getContainer()->get('mmd.mc_monitor.minecraft_query');
 
         try {
             $output->writeln('');
             $output->writeln('Checking '. $server->getIp());
 
-            $minecraftQuery->Connect($serverIp, $serverPort);
+            $checker = new MinecraftServerPing($serverIp, $serverPort, 3);
 
-            $webhookData['status'] = true;
-            $webhookData['data']['info'] = $minecraftQuery->GetInfo();
+            if ($data = $checker->QueryOldPre17()) {
+                $webhookData['data'] = array(
+                    'hostname'   => $this->fixHostname($data['HostName']),
+                    'numplayers' => $data['Players'],
+                    'maxplayers' => $data['MaxPlayers'],
+                    'version'    => $data['Version'],
+                );
 
-            $webhookData['data']['info']['hostname'] = ForceUTF8Encoding::toUTF8($webhookData['data']['info']['hostname']);
-            $webhookData['data']['info']['_parsed']['hostname'] = str_replace(array(
-                '§0', '§1', '§2', '§3', '§4', '§5', '§6', '§7', '§8', '§9', '§a', '§b', '§c', '§d', '§e', '§f',
-                '§k', '§l', '§m', '§n', '§o', '§r'
-            ), array(''), $webhookData['data']['info']['hostname']);
+                $output->writeln(
+                    sprintf('<info>Online %d/%d players. v%s</info>',
+                        $webhookData['data']['numplayers'],
+                        $webhookData['data']['maxplayers'],
+                        $webhookData['data']['version']
+                    )
+                );
 
-            $output->writeln(
-                sprintf('<info>Online %d/%d players</info>',
-                    $webhookData['data']['info']['numplayers'],
-                    $webhookData['data']['info']['maxplayers']
-                )
-            );
-        } catch(MinecraftQueryException $e) {
+                $webhookData['status'] = true;
+            } else {
+                $output->writeln('<error>'. 'No data received' .'</error>');
+            }
+        } catch(MinecraftServerPingException $e) {
             $output->writeln('<error>'. '[Minecraft Query Exception]'. PHP_EOL . $e->getMessage() .'</error>');
         }
 
         return $webhookData;
+    }
+
+    protected function fixHostname($hostname)
+    {
+        return str_replace(
+            array(
+                '§0', '§1', '§2', '§3', '§4', '§5', '§6', '§7', '§8', '§9', '§a', '§b', '§c', '§d', '§e', '§f',
+                '§k', '§l', '§m', '§n', '§o', '§r',
+                '&0', '&1', '&2', '&3', '&4', '&5', '&6', '&7', '&8', '&9', '&a', '&b', '&c', '&d', '&e', '&f',
+                '&k', '&l', '&m', '&n', '&o', '&r',
+            ),
+            array(''),
+            ForceUTF8Encoding::toUTF8($hostname)
+        );
     }
 }

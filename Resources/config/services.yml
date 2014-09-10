@@ -2,6 +2,6 @@ parameters:
     mmd.mc_monitor.secret: "SfX7PSPtUUejg5wrn7x57daE"
     mmd.mc_monitor.webhook: "https://localhost/secret-url-for-mc-monitor/"
 
-services:
-    mmd.mc_monitor.minecraft_query:
-        class: Mmd\Bundle\McMonitorBundle\Service\MinecraftQuery
+#services:
+#    mmd.mc_monitor.minecraft_query:
+#        class: Mmd\Bundle\McMonitorBundle\Service\MinecraftQuery

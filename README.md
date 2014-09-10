@@ -93,7 +93,10 @@ https://site.com/secret-url-for-mc-monitor/?data=base64encoded({
         "<server-ip>": {
             status: true, /* true=online, false=offline */
             data: {
-                info: {...} /* http://wiki.vg/Query#Full_stat */
+                'hostname': 'Awesome minecraft server motd',
+                'numplayers': 7,
+                'maxplayers': 20,
+                'version': '1.8'
             }
         },
         "<server-ip>": {...},
