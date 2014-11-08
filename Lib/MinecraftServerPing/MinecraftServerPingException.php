@@ -1,8 +1,8 @@
 <?php
 
-namespace Mmd\Bundle\McMonitorBundle\Lib;
+namespace Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPing;
 
-class MinecraftServerPingException extends Exception
+class MinecraftServerPingException extends \Exception
 {
     //
 }

@@ -2,7 +2,7 @@
 
 namespace Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPing;
 
-use Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPingException;
+use Mmd\Bundle\McMonitorBundle\Lib\MinecraftServerPing\MinecraftServerPingException;
 
 class MinecraftServerPing
 {
