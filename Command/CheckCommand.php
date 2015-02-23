@@ -140,6 +140,10 @@ class CheckCommand extends ContainerAwareCommand
             $checker = new MinecraftServerPing($serverIp, $serverPort, 3);
 
             if ($data = $checker->QueryOldPre17()) {
+                // some servers have version 'vWtfText 1.8.2'
+                $data['Version'] = explode(' ', $data['Version']);
+                $data['Version'] = array_pop($data['Version']);
+
                 $webhookData['data'] = array(
                     'hostname'   => $this->fixHostname($data['HostName']),
                     'numplayers' => $data['Players'],
