@@ -13,7 +13,8 @@ This will prevent your site being blocked when making requests to servers.
     ...
     "mmd/mc-monitor": "dev-master",
     "sensio/buzz-bundle": "dev-master",
-    "neitanod/forceutf8": "dev-master"
+    "neitanod/forceutf8": "dev-master",
+    "xpaw/php-minecraft-query": "dev-master"
 }
 ```
 
