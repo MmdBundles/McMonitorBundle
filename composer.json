@@ -14,7 +14,8 @@
     "require": {
         "php": ">=5.3.0",
         "sensio/buzz-bundle": "dev-master",
-        "neitanod/forceutf8": "dev-master"
+        "neitanod/forceutf8": "dev-master",
+        "xpaw/php-minecraft-query": "dev-master"
     },
     "autoload": {
         "psr-4": {
