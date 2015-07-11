@@ -66,12 +66,12 @@ class CheckCommand extends ContainerAwareCommand
 
         try {
             $output->writeln('');
-            $output->writeln('Calling webhook: '. $webhookUrl .'?data=...');
+            $output->writeln('Calling webhook: '. $webhookUrl);
 
             /**
              * @var \Buzz\Message\Response $response
              */
-            $response = $buzz->get($webhookUrl .'?data='. urlencode(base64_encode(json_encode($webhookData))));
+            $response = $buzz->post($webhookUrl, array(), json_encode($webhookData));
 
             $statusCode = $response->getStatusCode();
 

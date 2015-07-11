@@ -88,7 +88,8 @@ GET /mc-monitor/api/v1/<secret>/add/<ip>
 The monitoring will do requests in the following format
 
 ```text
-https://site.com/secret-url-for-mc-monitor/?data=base64encoded({
+POST https://site.com/secret-url-for-mc-monitor/
+{
     secret: "<secret-set-in-parameters>",
     servers: {
         "<server-ip>": {
@@ -103,7 +104,7 @@ https://site.com/secret-url-for-mc-monitor/?data=base64encoded({
         "<server-ip>": {...},
         ...
     }
-})
+}
 ```
 
 * Remove a server from monitoring
