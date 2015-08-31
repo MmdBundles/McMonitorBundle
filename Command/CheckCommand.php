@@ -148,7 +148,7 @@ class CheckCommand extends ContainerAwareCommand
             $data = $Query->GetInfo();
 
             $webhookData['data'] = array(
-                'hostname'   => $this->fixHostname($data['HostName']),
+                'hostname'   => $data['HostName'],
                 'numplayers' => $data['Players'],
                 'maxplayers' => $data['MaxPlayers'],
                 'version'    => $data['Version'],
@@ -158,6 +158,11 @@ class CheckCommand extends ContainerAwareCommand
             {
                 $webhookData['data']['version'] = explode(' ', $webhookData['data']['version']);
                 $webhookData['data']['version'] = array_pop($webhookData['data']['version']);
+            }
+
+            {
+                $webhookData['data']['hostname'] = $this->codesToHtml($webhookData['data']['hostname']);
+                $webhookData['data']['version']  = $this->codesToHtml($webhookData['data']['version']);
             }
 
             $output->writeln(
@@ -183,7 +188,7 @@ class CheckCommand extends ContainerAwareCommand
                     $data = $Query->Query();
 
                     $webhookData['data'] = array(
-                        'hostname'   => $this->fixHostname($data['description']),
+                        'hostname'   => $data['description'],
                         'numplayers' => $data['players']['online'],
                         'maxplayers' => $data['players']['max'],
                         'version'    => $data['version']['name'],
@@ -193,6 +198,11 @@ class CheckCommand extends ContainerAwareCommand
                     {
                         $webhookData['data']['version'] = explode(' ', $webhookData['data']['version']);
                         $webhookData['data']['version'] = array_pop($webhookData['data']['version']);
+                    }
+
+                    {
+                        $webhookData['data']['hostname'] = $this->codesToHtml($webhookData['data']['hostname']);
+                        $webhookData['data']['version']  = $this->codesToHtml($webhookData['data']['version']);
                     }
 
                     $output->writeln(
@@ -217,17 +227,129 @@ class CheckCommand extends ContainerAwareCommand
         return $webhookData;
     }
 
-    protected function fixHostname($hostname)
+    public function codesToHtml($raw)
     {
-        return str_replace(
-            array(
-                '§0', '§1', '§2', '§3', '§4', '§5', '§6', '§7', '§8', '§9', '§a', '§b', '§c', '§d', '§e', '§f',
-                '§k', '§l', '§m', '§n', '§o', '§r',
-                '&0', '&1', '&2', '&3', '&4', '&5', '&6', '&7', '&8', '&9', '&a', '&b', '&c', '&d', '&e', '&f',
-                '&k', '&l', '&m', '&n', '&o', '&r',
+        $codes = array(
+            '0' => array(
+                'open' => '<span style="color:#000000;">',
+                'close' => '</span>',
             ),
-            array(''),
-            ForceUTF8Encoding::toUTF8($hostname)
+            '1' => array(
+                'open' => '<span style="color:#0000AA;">',
+                'close' => '</span>',
+            ),
+            '2' => array(
+                'open' => '<span style="color:#00AA00;">',
+                'close' => '</span>',
+            ),
+            '3' => array(
+                'open' => '<span style="color:#00AAAA;">',
+                'close' => '</span>',
+            ),
+            '4' => array(
+                'open' => '<span style="color:#AA0000;">',
+                'close' => '</span>',
+            ),
+            '5' => array(
+                'open' => '<span style="color:#AA00AA;">',
+                'close' => '</span>',
+            ),
+            '6' => array(
+                'open' => '<span style="color:#FFAA00;">',
+                'close' => '</span>',
+            ),
+            '7' => array(
+                'open' => '<span style="color:#AAAAAA;">',
+                'close' => '</span>',
+            ),
+            '8' => array(
+                'open' => '<span style="color:#555555;">',
+                'close' => '</span>',
+            ),
+            '9' => array(
+                'open' => '<span style="color:#5555FF;">',
+                'close' => '</span>',
+            ),
+            'a' => array(
+                'open' => '<span style="color:#55FF55;">',
+                'close' => '</span>',
+            ),
+            'b' => array(
+                'open' => '<span style="color:#55FFFF;">',
+                'close' => '</span>',
+            ),
+            'c' => array(
+                'open' => '<span style="color:#FF5555;">',
+                'close' => '</span>',
+            ),
+            'd' => array(
+                'open' => '<span style="color:#FF55FF;">',
+                'close' => '</span>',
+            ),
+            'e' => array(
+                'open' => '<span style="color:#FFFF55;">',
+                'close' => '</span>',
+            ),
+            'f' => array(
+                'open' => '<span style="color:#FFFFFF;">',
+                'close' => '</span>',
+            ),
+            'k' => array(
+                'open' => '<span data-obfuscated>',
+                'close' => '</span>',
+            ),
+            'l' => array(
+                'open' => '<strong>',
+                'close' => '</strong>',
+            ),
+            'm' => array(
+                'open' => '<s>',
+                'close' => '</s>',
+            ),
+            'n' => array(
+                'open' => '<u>',
+                'close' => '</u>',
+            ),
+            'o' => array(
+                'open' => '<b>',
+                'close' => '</b>',
+            ),
+            'r' => array(
+                'open' => '',
+                'close' => '',
+            ),
         );
+
+        $html = '';
+        $prevChar = null;
+        $prevIsCode = false;
+        $open = array();
+
+        foreach (preg_split('/(?<!^)(?!$)/u', $raw) as $char) {
+            if ($prevChar === '§' && isset($codes[$char])) {
+                if (!$prevIsCode || $char === 'r') {
+                    while ($code = array_pop($open)) {
+                        $html .= $codes[$code]['close'];
+                    }
+                }
+
+                $open[] = $char;
+                $html .= $codes[$char]['open'];
+
+                $prevIsCode = true;
+            } elseif ($char !== '§') {
+                $html .= htmlspecialchars($char);
+
+                $prevIsCode = false;
+            }
+
+            $prevChar = $char;
+        }
+
+        while ($code = array_pop($open)) {
+            $html .= $codes[$code]['close'];
+        }
+
+        return $html;
     }
 }
