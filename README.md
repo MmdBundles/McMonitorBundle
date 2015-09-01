@@ -6,59 +6,57 @@ This will prevent your site being blocked when making requests to servers.
 
 ## Install
 
-* Add to `composer.json`
+* Install the bundle and its dependecies
 
-```json
-"require": {
-    ...
-    "mmd/mc-monitor": "dev-master",
-    "sensio/buzz-bundle": "dev-master",
-    "neitanod/forceutf8": "dev-master",
-    "xpaw/php-minecraft-query": "dev-master"
-}
-```
+    ```sh
+    composer require \
+        'mmd/mc-monitor:dev-master' \
+        'sensio/buzz-bundle:dev-master' \
+        'neitanod/forceutf8:dev-master' \
+        'xpaw/php-minecraft-query:dev-master'
+    ```
 
 * Include bundle in `app/AppKernel.php`
 
-```php
-$bundles = array(
-    ...
-    new Mmd\Bundle\McMonitorBundle\MmdMcMonitorBundle(),
-);
-```
+    ```php
+    $bundles = array(
+        ...
+        new Mmd\Bundle\McMonitorBundle\MmdMcMonitorBundle(),
+    );
+    ```
 
 * Include routing in `app/config/routing.yml`
 
-```yml
-mmd_mc_monitor:
-    resource: "@MmdMcMonitorBundle/Resources/config/routing.yml"
-    prefix:   /mc-monitor
-```
+    ```yml
+    mmd_mc_monitor:
+        resource: "@MmdMcMonitorBundle/Resources/config/routing.yml"
+        prefix:   /mc-monitor
+    ```
 
 * Add parameters to `app/config/parameters.yml`
 
-```yml
-# The secret used in API requests
-mmd.mc_monitor.secret: "my-secret"
-
-# The url to your site (with server list) where monitoring will send servers status updates
-mmd.mc_monitor.webhook: "https://my-site.com/monitoring-updates"
-```
+    ```yml
+    # The secret used in API requests
+    mmd.mc_monitor.secret: "my-secret"
+    
+    # The url to your site (with server list) where monitoring will send servers status updates
+    mmd.mc_monitor.webhook: "https://my-site.com/monitoring-updates"
+    ```
 
 * Create database tables
 
-```sh
-php app/console doctrine:schema:update --force
-```
+    ```sh
+    php app/console doctrine:schema:update --force
+    ```
 
 ## Configure
 
 * Set crontab to execute command that checks servers status and send information to the webhook
 
-```sh
-cd /path/to/project/root/
-sudo -u www-data php app/console mmd:mc-monitor:check 3
-```
+    ```sh
+    cd /path/to/project/root/
+    sudo -u www-data php app/console mmd:mc-monitor:check 3
+    ```
 
 You can specify how many servers to check at once.
 
@@ -71,17 +69,17 @@ In this case the cron must be set as root user for the `sudo` command to work in
 
 * Add server ip to monitoring
 
-```text
-# Request
-GET /mc-monitor/api/v1/<secret>/add/<ip>
-```
-
-```text
-# Response
-{"status":true, "message": "Server added"}
-# or
-{"status":false, "message": "Invalid ip"}
-```
+    ```text
+    # Request
+    GET /mc-monitor/api/v1/<secret>/add/<ip>
+    ```
+    
+    ```text
+    # Response
+    {"status":true, "message": "Server added"}
+    # or
+    {"status":false, "message": "Invalid ip"}
+    ```
 
 * In your application, you must handle monitoring server updates requests to the url set in the `mmd.mc_monitor.webhook` parameter
 
@@ -95,10 +93,10 @@ POST https://site.com/secret-url-for-mc-monitor/
         "<server-ip>": {
             status: true, /* true=online, false=offline */
             data: {
-                'hostname': 'Awesome minecraft server motd',
+                'hostname': '<span style="color:#00AAAA;">Awesome</span> <strong>minecraft</strong> server motd',
                 'numplayers': 7,
                 'maxplayers': 20,
-                'version': '1.8'
+                'version': '1.<span style="color:#AA00AA;">8</span>'
             }
         },
         "<server-ip>": {...},
@@ -117,5 +115,11 @@ A server can be removed from monitoring by sending a json response to the API,
 when it will make a request to specified webhook url, in the following format:
 
 ```json
-{"remove":["127.0.0.1:25565","192.168.1.100","<server-ip>"]}
+{
+    "remove": [
+        "127.0.0.1:25565",
+        "192.168.1.100",
+        "<server-ip>"
+    ]
+}
 ```
