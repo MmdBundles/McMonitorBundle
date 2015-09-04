@@ -233,119 +233,172 @@ class CheckCommand extends ContainerAwareCommand
             '0' => array(
                 'open' => '<span style="color:#000000;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '1' => array(
                 'open' => '<span style="color:#0000AA;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '2' => array(
                 'open' => '<span style="color:#00AA00;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '3' => array(
                 'open' => '<span style="color:#00AAAA;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '4' => array(
                 'open' => '<span style="color:#AA0000;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '5' => array(
                 'open' => '<span style="color:#AA00AA;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '6' => array(
                 'open' => '<span style="color:#FFAA00;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '7' => array(
                 'open' => '<span style="color:#AAAAAA;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '8' => array(
                 'open' => '<span style="color:#555555;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             '9' => array(
                 'open' => '<span style="color:#5555FF;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'a' => array(
                 'open' => '<span style="color:#55FF55;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'b' => array(
                 'open' => '<span style="color:#55FFFF;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'c' => array(
                 'open' => '<span style="color:#FF5555;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'd' => array(
                 'open' => '<span style="color:#FF55FF;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'e' => array(
                 'open' => '<span style="color:#FFFF55;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'f' => array(
                 'open' => '<span style="color:#FFFFFF;">',
                 'close' => '</span>',
+                'group' => 'color',
             ),
             'k' => array(
                 'open' => '<span data-obfuscated>',
                 'close' => '</span>',
+                'group' => 'style',
             ),
             'l' => array(
                 'open' => '<strong>',
                 'close' => '</strong>',
+                'group' => 'style',
             ),
             'm' => array(
                 'open' => '<s>',
                 'close' => '</s>',
+                'group' => 'style',
             ),
             'n' => array(
                 'open' => '<u>',
                 'close' => '</u>',
+                'group' => 'style',
             ),
             'o' => array(
                 'open' => '<b>',
                 'close' => '</b>',
+                'group' => 'style',
             ),
             'r' => array(
                 'open' => '',
                 'close' => '',
+                'group' => '',
             ),
         );
 
         $html = '';
         $prevChar = null;
-        $prevIsCode = false;
-        $open = array();
+        $opening = $open = array( /* 'group' => $char */ );
 
         foreach (preg_split('/(?<!^)(?!$)/u', $raw) as $char) {
-            if ($prevChar === '§' && isset($codes[$char])) {
-                if (!$prevIsCode || $char === 'r') {
+            if ($prevChar === '§' && isset($codes[$char])) { // it's code
+                $group = $codes[$char]['group'];
+
+                if ($char === 'r') { // close all
+                    $opening = array();
+                    unset($open[$group]);
                     while ($code = array_pop($open)) {
                         $html .= $codes[$code]['close'];
                     }
+                } elseif (isset($open[$group])) { // close the tag and all tags opened after it
+                    foreach (array_reverse($open, true) as $openGroup => $openChar) {
+                        unset($open[$openGroup]);
+
+                        $html .= $codes[ $openChar ]['close'];
+
+                        if ($group === $openGroup) {
+                            break;
+                        }
+                    }
                 }
 
-                $open[] = $char;
-                $html .= $codes[$char]['open'];
+                unset($opening[$group]); // reset position
+                $opening[$group] = $char; // append
+            } elseif ($char !== '§') { // it's a text char
+                if ($opening) { // open pending tags
+                    foreach ($opening as $openingGroup => $openingChar) {
+                        unset($opening[$openingGroup]);
 
-                $prevIsCode = true;
-            } elseif ($char !== '§') {
+                        if (isset($open[$openingGroup])) { // close the tag and all tags opened after it
+                            foreach (array_reverse($open, true) as $openGroup => $openChar) {
+                                unset($open[$openGroup]);
+
+                                $html .= $codes[ $openChar ]['close'];
+
+                                if ($openingGroup === $openGroup) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        $open[$openingGroup] = $openingChar;
+                        $html .= $codes[$openingChar]['open'];
+                    }
+                }
+
                 $html .= htmlspecialchars($char);
-
-                $prevIsCode = false;
             }
 
             $prevChar = $char;
         }
 
+        // close all open tags
         while ($code = array_pop($open)) {
             $html .= $codes[$code]['close'];
         }
