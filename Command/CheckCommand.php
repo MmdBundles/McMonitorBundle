@@ -316,8 +316,8 @@ class CheckCommand extends ContainerAwareCommand
                 'group' => 'style',
             ),
             'l' => array(
-                'open' => '<strong>',
-                'close' => '</strong>',
+                'open' => '<b>',
+                'close' => '</b>',
                 'group' => 'style',
             ),
             'm' => array(
@@ -331,8 +331,8 @@ class CheckCommand extends ContainerAwareCommand
                 'group' => 'style',
             ),
             'o' => array(
-                'open' => '<b>',
-                'close' => '</b>',
+                'open' => '<i>',
+                'close' => '</i>',
                 'group' => 'style',
             ),
             'r' => array(
