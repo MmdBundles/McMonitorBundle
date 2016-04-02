@@ -346,6 +346,8 @@ class CheckCommand extends ContainerAwareCommand
         $prevChar = null;
         $opening = $open = array( /* 'group' => $char */ );
 
+        if (!is_string($raw)) return '???'; // fixme
+
         foreach (preg_split('/(?<!^)(?!$)/u', $raw) as $char) {
             if ($prevChar === '§' && isset($codes[$char])) { // it's code
                 $group = $codes[$char]['group'];
